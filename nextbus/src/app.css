@@ -40,4 +40,15 @@ select {
   display: flex;
   gap: 15px;
   align-items: center;
+  justify-content: space-between;
+}
+
+.app_company-selector {
+  width: 300px;
+}
+.app_route-selector {
+  width: 300px;
+}
+.app_stop-selector {
+  width: 750px;
 }

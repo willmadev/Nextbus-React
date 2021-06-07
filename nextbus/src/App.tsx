@@ -31,17 +31,6 @@ const CompanySelector: FC<CompanySelectorProps> = ({ value, onChange }) => {
       <SelectSearch options={options} value={value} onChange={onChange} />
     </div>
   );
-  // return (
-  //   <div className="app_company-selector">
-  //     <label htmlFor="company">Select Company: </label>
-  //     <select name="company" value={value} onChange={onChange}>
-  //       <option value="">Select an option</option>
-  //       <option value="CTB">Citybus</option>
-  //       <option value="NWFB">New World First Bus</option>
-  //       <option value="NLB">New Lantao Bus Company</option>
-  //     </select>
-  //   </div>
-  // );
 };
 
 interface RouteSelectorProps {
@@ -88,10 +77,91 @@ const RouteSelector: FC<RouteSelectorProps> = ({
   );
 };
 
+interface StopSelectorProps {
+  company: string;
+  route: string;
+  onChange: (
+    selectedValue: SelectedOptionValue | SelectedOptionValue[],
+    selectedOption: SelectedOption | SelectedOption[],
+    optionSnapshot: SelectSearchProps
+  ) => void;
+  value: string;
+}
+
+const StopSelector: FC<StopSelectorProps> = ({
+  company,
+  route,
+  onChange,
+  value,
+}) => {
+  const [options, setOptions] = useState([{ name: "", value: "" }]);
+  useEffect(() => {
+    let inboundResult;
+    let outboundResult;
+    console.log("company:", company);
+    console.log("route:", route);
+    const fetchStops = async () => {
+      inboundResult = await axios(
+        `https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/${company}/${route}/inbound`
+      );
+      const inboundStopsResult = await Promise.all(
+        inboundResult.data.data.map(async (value: any) => {
+          const stopData = await axios(
+            `https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${value.stop}`
+          );
+          return stopData.data.data;
+        })
+      );
+
+      outboundResult = await axios(
+        `https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/${company}/${route}/outbound`
+      );
+      const outboundStopsResult = await Promise.all(
+        outboundResult.data.data.map(async (value: any) => {
+          const stopData = await axios(
+            `https://rt.data.gov.hk/v1/transport/citybus-nwfb/stop/${value.stop}`
+          );
+          // console.log(stopData.data.data);
+          return stopData.data.data;
+        })
+      );
+      console.log(inboundStopsResult);
+      console.log(outboundStopsResult);
+      const test = [
+        ...inboundStopsResult.map((value: any) => {
+          return { name: value.name_en, value: value.stop };
+        }),
+        ...outboundStopsResult.map((value: any) => {
+          return { name: value.name_en, value: value.stop };
+        }),
+      ];
+
+      setOptions(test);
+    };
+    fetchStops();
+  }, [company, route]);
+  console.log(options);
+  return (
+    <div className="app_stop-selector app_selector">
+      <p>Select Stop</p>
+      <SelectSearch
+        options={options}
+        search
+        filterOptions={fuzzySearch}
+        onChange={onChange}
+        value={value}
+      />
+    </div>
+  );
+};
+
 const App: FC = () => {
   const [company, setCompany] = useState("");
   const [route, setRoute] = useState("");
-  let companySelected = company !== "";
+  const [stop, setStop] = useState("");
+  const companySelected = company !== "";
+  const routeSelected = route !== "";
+  const stopSelected = stop !== "";
 
   return (
     <div className="page-wrapper">
@@ -105,6 +175,7 @@ const App: FC = () => {
           onChange={(value: any) => {
             setCompany(value);
             setRoute("");
+            setStop("");
           }}
         />
         {companySelected ? (
@@ -114,6 +185,15 @@ const App: FC = () => {
             onChange={(value: any) => setRoute(value)}
           />
         ) : null}
+        {routeSelected ? (
+          <StopSelector
+            company={company}
+            route={route}
+            value={stop}
+            onChange={(value: any) => setStop(value)}
+          />
+        ) : null}
+        {stopSelected ? <p>{stop}</p> : null}
       </div>
     </div>
   );

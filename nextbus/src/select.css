@@ -2,7 +2,7 @@
  * Main wrapper
  */
 .select-search {
-  width: 230px;
+  width: 100%;
   position: relative;
   font-family: "roboto", sans-serif;
   box-sizing: border-box;
