@@ -155,6 +155,30 @@ const StopSelector: FC<StopSelectorProps> = ({
   );
 };
 
+interface EtaDisplayProps {
+  route: string;
+  stop: string;
+  company: string;
+}
+const EtaDisplay: FC<EtaDisplayProps> = ({ route, stop, company }) => {
+  const [eta, setEta] = useState("");
+  useEffect(() => {
+    const fetchEta = async () => {
+      const result = await axios(
+        `https://rt.data.gov.hk/v1/transport/citybus-nwfb/eta/${company}/${stop}/${route}`
+      );
+      const resultEta = new Date(result.data.data[0].eta);
+      setEta(resultEta.toLocaleTimeString());
+    };
+    fetchEta();
+  });
+  return (
+    <div className="app_eta-wrapper">
+      {eta !== "" ? <p>The next bus is coming at: {eta}</p> : <p>Loading...</p>}
+    </div>
+  );
+};
+
 const App: FC = () => {
   const [company, setCompany] = useState("");
   const [route, setRoute] = useState("");
@@ -193,7 +217,9 @@ const App: FC = () => {
             onChange={(value: any) => setStop(value)}
           />
         ) : null}
-        {stopSelected ? <p>{stop}</p> : null}
+        {stopSelected ? (
+          <EtaDisplay company={company} route={route} stop={stop} />
+        ) : null}
       </div>
     </div>
   );
