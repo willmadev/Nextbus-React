@@ -138,10 +138,10 @@ const StopSelector: FC<StopSelectorProps> = ({
       console.log(outboundStopsResult);
       const test = [
         ...inboundStopsResult.map((value: any) => {
-          return { name: value.name_en, value: value.stop };
+          return { name: `${value.name_en} (Inbound)`, value: value.stop };
         }),
         ...outboundStopsResult.map((value: any) => {
-          return { name: value.name_en, value: value.stop };
+          return { name: `${value.name_en} (Outbound)`, value: value.stop };
         }),
       ];
 
@@ -196,7 +196,7 @@ const EtaDisplay: FC<EtaDisplayProps> = ({ route, stop, company }) => {
       setLoading(false);
     };
     fetchEta();
-  }, []);
+  }, [route, stop, company]);
   return (
     <div className="app_eta-wrapper">
       {loading ? (
