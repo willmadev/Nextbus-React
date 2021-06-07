@@ -49,30 +49,39 @@ const RouteSelector: FC<RouteSelectorProps> = ({
   onChange,
 }) => {
   const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchRoutes = async () => {
+      setLoading(true);
       const result = await axios(
         `https://rt.data.gov.hk/v1/transport/citybus-nwfb/route/${company}`
       );
       if (result.status === 200) {
         setRoutes(result.data.data);
       }
+      setLoading(false);
     };
     fetchRoutes();
   }, [company]);
 
   return (
-    <div className="app_route-selector app_selector">
-      <p>Select Route</p>
-      <SelectSearch
-        options={routes.map((route: any) => {
-          return { name: route.route, value: route.route };
-        })}
-        search
-        filterOptions={fuzzySearch}
-        onChange={onChange}
-        value={value}
-      />
+    <div>
+      {loading ? (
+        <p>loading...</p>
+      ) : (
+        <div className="app_route-selector app_selector">
+          <p>Select Route</p>
+          <SelectSearch
+            options={routes.map((route: any) => {
+              return { name: route.route, value: route.route };
+            })}
+            search
+            filterOptions={fuzzySearch}
+            onChange={onChange}
+            value={value}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -95,12 +104,12 @@ const StopSelector: FC<StopSelectorProps> = ({
   value,
 }) => {
   const [options, setOptions] = useState([{ name: "", value: "" }]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     let inboundResult;
     let outboundResult;
-    console.log("company:", company);
-    console.log("route:", route);
     const fetchStops = async () => {
+      setLoading(true);
       inboundResult = await axios(
         `https://rt.data.gov.hk/v1/transport/citybus-nwfb/route-stop/${company}/${route}/inbound`
       );
@@ -137,20 +146,26 @@ const StopSelector: FC<StopSelectorProps> = ({
       ];
 
       setOptions(test);
+      setLoading(false);
     };
     fetchStops();
   }, [company, route]);
-  console.log(options);
   return (
-    <div className="app_stop-selector app_selector">
-      <p>Select Stop</p>
-      <SelectSearch
-        options={options}
-        search
-        filterOptions={fuzzySearch}
-        onChange={onChange}
-        value={value}
-      />
+    <div>
+      {loading ? (
+        <p>loading...</p>
+      ) : (
+        <div className="app_stop-selector app_selector">
+          <p>Select Stop</p>
+          <SelectSearch
+            options={options}
+            search
+            filterOptions={fuzzySearch}
+            onChange={onChange}
+            value={value}
+          />{" "}
+        </div>
+      )}
     </div>
   );
 };
@@ -162,19 +177,35 @@ interface EtaDisplayProps {
 }
 const EtaDisplay: FC<EtaDisplayProps> = ({ route, stop, company }) => {
   const [eta, setEta] = useState("");
+  const [validEta, setValidEta] = useState(true);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchEta = async () => {
+      setLoading(true);
       const result = await axios(
         `https://rt.data.gov.hk/v1/transport/citybus-nwfb/eta/${company}/${stop}/${route}`
       );
-      const resultEta = new Date(result.data.data[0].eta);
-      setEta(resultEta.toLocaleTimeString());
+      if (result.data && result.data.data.length > 0) {
+        console.log(result.data.data);
+        const resultEta = new Date(result.data.data[0].eta);
+        setEta(resultEta.toLocaleTimeString());
+        setValidEta(true);
+      } else {
+        setValidEta(false);
+      }
+      setLoading(false);
     };
     fetchEta();
-  });
+  }, []);
   return (
     <div className="app_eta-wrapper">
-      {eta !== "" ? <p>The next bus is coming at: {eta}</p> : <p>Loading...</p>}
+      {loading ? (
+        <p>loading...</p>
+      ) : validEta ? (
+        <p>The next bus is coming at: {eta}</p>
+      ) : (
+        <p>No valid ETA</p>
+      )}
     </div>
   );
 };
@@ -206,7 +237,10 @@ const App: FC = () => {
           <RouteSelector
             company={company}
             value={route}
-            onChange={(value: any) => setRoute(value)}
+            onChange={(value: any) => {
+              setRoute(value);
+              setStop("");
+            }}
           />
         ) : null}
         {routeSelected ? (
